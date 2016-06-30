@@ -6,7 +6,7 @@ cd $BUGZILLA_ROOT
 CPANM="cpanm --quiet --notest --skip-satisfied"
 
 if [ "$GITHUB_BASE_BRANCH" == "master" ]; then
-    perl checksetup.pl --cpanfile
+    perl checksetup.pl 
     $CPANM --installdeps --with-recommends --with-all-features \
         --without-feature oracle --without-feature sqlite --without-feature pg .
 else
@@ -18,10 +18,10 @@ else
 fi
 
 # For testing support
-$CPANM JSON::XS
-$CPANM Test::WWW::Selenium
-$CPANM Pod::Coverage
-$CPANM Pod::Checker
+# $CPANM JSON::XS
+# $CPANM Test::WWW::Selenium
+# $CPANM Pod::Coverage
+# $CPANM Pod::Checker
 
 # Remove CPAN build files to minimize disk usage
 rm -rf ~/.cpanm

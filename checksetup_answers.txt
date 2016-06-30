@@ -1,6 +1,6 @@
-$answer{'ADMIN_EMAIL'} = 'admin@bugzilla.org';
+$answer{'ADMIN_EMAIL'} = 'thimoon@sina.com';
 $answer{'ADMIN_OK'} = 'Y';
-$answer{'ADMIN_PASSWORD'} = 'password';
+$answer{'ADMIN_PASSWORD'} = 'passwd';
 $answer{'ADMIN_REALNAME'} = 'Admin';
 $answer{'NO_PAUSE'} = 1;
 $answer{'create_htaccess'} = '';
@@ -21,6 +21,6 @@ $answer{'diffpath'} = '/usr/bin';
 $answer{'index_html'} = 0;
 $answer{'interdiffbin'} = '/usr/bin/interdiff';
 $answer{'memcached_servers'} = "localhost:11211";
-$answer{'urlbase'} = 'http://localhost:8080/bugzilla/';
+$answer{'urlbase'} = 'http://localhost/bugzilla/';
 $answer{'use_suexec'} = '';
 $answer{'webservergroup'} = 'bugzilla';

@@ -3,155 +3,72 @@ Docker Bugzilla
 
 Configure a running Bugzilla system using Docker
 
-## Features
+> This is forked from dklawren/docker-bugzilla
+
+## Origin Features
 
 * Running latest Centos
-* Preconfigured with initial data and test product
+* Preconfigured with initial data 
 * Running Apache2 and MySQL Community Server 5.6
-* Openssh server so you can ssh in to the system to make changes
 * Code resides in `/home/bugzilla/devel/htdocs/bugzilla` and can be updated,
   diffed, and branched using standard git commands
 
-## How to install Docker and Fig
+## Extended Features
 
-### Linux
+* Use Bugzilla v5.0.2 instead of v4.4.
+* Add data Volume /bak, which used for importing/restoring data.
 
-1. Visit [Docker][docker] and get docker up and running on your system.
+## Examples
 
-2. Visit [Fig][fig] to install Fig for managing Docker containers.
+- Clone the repor and build the image in the folder where holding Dockerfile
 
-### OSX
-
-1. Visit [Docker][docker] and get docker up and running on your system.
-
-2. Visit [Fig][fig] to install Fig for managing multiple related Docker containers.
-
-3. Start boot2docker in a terminal once it is installed. Ensure that you run the
- export DOCKER_HOST=... lines when prompted:
-
-```bash
-$ boot2docker start
-$ export DOCKER_HOST=tcp://192.168.59.103:2375
+```
+[simon.xie@centos-docker src]# docker build -t bugzilla:simon .
 ```
 
-### Windows
+> It'll docker pull dklawren's v4.4 images if it's not exist and appending stuffs from this fork 
 
-1. Install the [Windows boot2docker installer][windows]
-2. Run the "Boot2Docker Start" shortcut on the startmenu (this inits the VM,
-   starts it and connects to it)
-3. Run the following in the boot2docker VM as a one-off:
-
-```bash
-echo 'alias fig='"'"'docker run --rm -it \
-        -v $(pwd):/app \
-        -v /var/run/docker.sock:/var/run/docker.sock \
-        -e FIG_PROJECT_NAME=$(basename $(pwd)) \
-        dduportal/fig'"'" >> /home/docker/.ashrc
+- Run a container that with host sharing in dameon:
+```
+[simon.xie@centos-docker ~]# docker run -d -p 80:80 -v /bak:/bak   bugzilla:simon  supervisord
+7f93f61878efa356c6c33c9c21891f3b5d79090f9268372b7991c3ac446faf60
 ```
 
-4. Logout from the VM (ctrl+D)
+- Restoring existed bugzilla config files and mysql **all-databases**: 
 
-Then all you need to do on later occasions is:
+> Make sure you have bugzilla tarball and the all-databases mysql bak file in your host sharing path:
 
-1. Re-run "Boot2Docker Start" or from the console just enter:
-
-```bash
-boot2docker start && boot2docker ssh
 ```
-
-2. cd `/c/Users/Username/src/bugzilla/contrib/docker` (paths under c:\Users are
-   automatically mapped by boot2docker from the client into the VM)
-3. `fig build` (and so on)`
-
-## Important boot2docker Notes
-
-Due to an issue with installation of certain packages in Centos7 and the
-default storage driver (AUFS) used by boot2docker, we need to change the
-driver to `devicemapper` for the image build process to complete properly.
-
-To do so, once you have boot2docker installed and the VM running, but before
-performing the build process, do:
-
-```bash
-$ boot2docker ssh
-Boot2Docker version 1.4.1, build master : 86f7ec8 - Tue Dec 16 23:11:29 UTC 2014
-Docker version 1.4.1, build 5bc2ff8
-docker@boot2docker:~$ echo 'EXTRA_ARGS="--storage-driver=devicemapper"' | sudo tee -a /var/lib/boot2docker/profile
-docker@boot2docker:~$ sudo /etc/init.d/docker restart
-```
-
-Also before building, you will need to change value in the 
-`checksetup_answers.txt` file to match the IP address of the boot2docker VM.
-You can find the IP address by running `boot2docker ip`.
-
-For example, using a text editor, change the following line in
-`checksetup_answers.txt` from:
-
-` $answer{'urlbase'} = 'http://localhost:8080/bugzilla/';`
-
-to
-
-` $answer{'urlbase'} = 'http://192.168.59.103:8080/bugzilla/';`
-
-## How to build Bugzilla Docker image
-
-To build a fresh image, just change to the directory containing the checked out
-files and run the below command:
-
-```bash
-$ fig build
-```
-
-## How to start Bugzilla Docker image
-
-To start a new container (or rerun your last container) you simply do:
-
-```bash
-$ fig up
-```
-
-This will stay in the foreground and you will see the output from `supervisord`. You
-can use the `-d` option to run the container in the background.
-
-To stop, start or remove the container that was created from the last run, you can do:
-
-```bash
-$ fig stop
-$ fig start
-$ fig rm
-```
-
-## How to access the Bugzilla container
-
-If you are using Linux, you can simply point your browser to
-`http://localhost:8080/bugzilla` to see the the Bugzilla home page.
-
-If using boot2docker, you will need to use the IP address of the VM. You can
-find the IP address using the `boot2docker ip` command. For example:
-
-```bash
-$ boot2docker ip
-192.168.59.103
+[simon.xie@centos-docker ~]# ls /bak/{bugzilla_bak.tar.gz,alldb.sql} -lh
+-rwxr-xr-x. 1 simon root 2.3M Jun 28 03:57 /bak/alldb.sql
+-rwxr-xr-x. 1 simon root  18M Jun 29 03:16 /bak/bugzilla_bak.tar.gz
 
 ```
 
-So would then point your browser to `http://192.168.59.103:8080/bugzilla`.
+> It's a all-databases dump rather than a simple bak of bugs db.
 
-The Administrator username is `admin@bugzilla.org` and the password is `password`.
-You can use the Administrator account to creat other users, add products or
-components, etc.
+```
+[simon.xie@centos-docker ~]# grep -ia 'create database' /bak/alldb.sql  | head -n 2
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `bugs` /*!40100 DEFAULT CHARACTER SET utf8 */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/ `mysql` /*!40100 DEFAULT CHARACTER SET latin1 */;
+```
 
-You can also ssh into the container using `ssh bugzilla@localhost -p2222` command.
-The password  is `bugzilla`. You can run multiple containers but you will need
-to give each one a different name/hostname as well as non-conflicting ports
-numbers for ssh and httpd.
+In this case, when call the /my_config.sh script with old ip/FQDN (the one in bak files) and new ip/FQDN (the one you want to use here), mysql root passwd and all expected datas will be restored.
 
-## TODO
+```
+[simon.xie@centos-docker ~]# docker exec -ti 7f9  /my_config.sh 10.9.0.187 192.168.141.11
+[Using] /bak/bugzilla_bak.tar.gz .. 
+[Restoring]  /usr/bin/mysql -uroot < /bak/alldb.sql......
 
-* Enable SSL support.
-* Enable memcached
+```
+
+If didn't put those 2x IPs, it prompts like this and don't change your datas:
+
+```
+[simon.xie@centos-docker ~]# docker exec -ti 7f9  /my_config.sh 
+Need BAK_IP and NEW_IP in $1, $2.
+
+```
 
 [docker]: https://docs.docker.com/installation/
-[windows]: http://docs.docker.com/installation/windows/
-[fig]: http://www.fig.sh
-[vagrant]: https://docs.vagrantup.com/v2/getting-started/
+
